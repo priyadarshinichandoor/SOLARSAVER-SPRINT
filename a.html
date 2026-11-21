@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WattWatch – SolarSaver</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#fff8ec;--card:#fff;--tx:#1d2433;--mu:#667085;--pr:#f59e0b;--pr2:#d97706;--ok:#16a34a;--bd:#eadfc9;--sh:0 6px 24px rgba(120,80,0,.10);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a2030;--tx:#eef1f7;--mu:#9aa4b8;--bd:#2a3350;--sh:0 6px 24px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg:#10141c;--card:#1a2030;--tx:#eef1f7;--mu:#9aa4b8;--bd:#2a3350;--sh:0 6px 24px rgba(0,0,0,.4)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;transition:background .3s}
+.wrap{max-width:960px;margin:auto;padding:16px}
+header{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:22px}
+.sun{width:38px;height:38px;border-radius:50%;background:var(--pr);box-shadow:0 0 0 6px rgba(245,158,11,.25);animation:pulse 2.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 14px rgba(245,158,11,.05);transform:scale(1.06)}}
+button{font:inherit;cursor:pointer}
+.ghost{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:6px 12px}
+.steps{display:flex;gap:8px;margin:16px 0}
+.steps div{flex:1;text-align:center;padding:8px;border-radius:10px;background:var(--card);border:1px solid var(--bd);font-size:14px;color:var(--mu);transition:.3s}
+.steps .on{background:var(--pr);color:#1d1400;font-weight:700;border-color:var(--pr)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:16px;box-shadow:var(--sh);margin-bottom:14px;animation:up .5s both}
+@keyframes up{from{opacity:0;transform:translateY(14px)}}
+h2{margin:0 0 4px}h3{margin:0 0 8px}.mu{color:var(--mu);font-size:14px}
+.row{display:grid;grid-template-columns:1.4fr auto 1.6fr;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--bd)}
+.row:last-child{border:0}
+.q{display:flex;align-items:center;gap:6px}.q button{width:32px;height:32px;border-radius:50%;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:18px}
+.q b{min-width:22px;text-align:center}
+input[type=range]{width:100%;accent-color:var(--pr2)}
+input,select{font:inherit;padding:9px 10px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+label{font-size:14px;color:var(--mu);display:block;margin-bottom:4px}
+.btn{background:var(--pr);color:#1d1400;border:0;border-radius:12px;padding:12px 20px;font-weight:700;transition:.2s}
+.btn:hover{transform:translateY(-2px);background:var(--pr2);color:#fff}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:8px}
+.drop{border:2px dashed var(--pr);border-radius:14px;padding:22px;text-align:center;cursor:pointer;transition:.2s}
+.drop:hover,.drop.d{background:rgba(245,158,11,.12)}
+.drop img{max-width:100%;max-height:200px;border-radius:10px;margin-top:8px}
+.hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.big{border-radius:16px;padding:18px;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#fff;animation:up .6s both}
+.big.g{background:linear-gradient(135deg,#16a34a,#0d9488)}
+.big span{font-size:34px;font-weight:800;display:block}
+.stat{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)}
+.stat:last-child{border:0}
+.bar{height:12px;border-radius:8px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%;width:0;background:var(--ok);transition:width 1.2s}
+.warn{background:rgba(220,38,38,.12);border:1px solid #dc2626;border-radius:10px;padding:8px 12px;margin:8px 0}
+.slab{width:100%;border-collapse:collapse;font-size:14px}.slab td,.slab th{padding:5px;text-align:right;border-bottom:1px solid var(--bd)}.slab th:first-child,.slab td:first-child{text-align:left}
+canvas{max-height:300px}
+.hide{display:none}
+@media(max-width:600px){.row{grid-template-columns:1fr auto}.row .sl{grid-column:1/-1}}
+@media print{.steps,.nav,header button,#noprint{display:none!important}.card{box-shadow:none;break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="logo">
+<div class="sun">
+</div>WattWatch <span class="mu" style="font-weight:500">SolarSaver</span></div>
+<button class="ghost" id="th">🌓 Theme</button></header>
+<div class="steps" id="steps"><div>1 · Appliances</div><div>2 · Bill & home</div><div>3 · Your solar plan</div></div>
+<main id="app"></main></div>
+<script>
+const CITIES={Hyderabad:5.4,Delhi:5.0,Mumbai:4.9,Bengaluru:5.2,Chennai:5.3,Kolkata:4.5,Pune:5.2,Ahmedabad:5.6,Jaipur:5.7,Lucknow:4.9,Bhopal:5.3,Nagpur:5.3,Patna:4.7,Chandigarh:4.9,Bhubaneswar:4.8,Kochi:4.7,Visakhapatnam:5.2,Indore:5.4,Coimbatore:5.3,Guwahati:4.4};
+// Approximate domestic slabs [upto units, Rs/unit] – editable estimates
+const TARIFF={"Telangana":[[50,1.95],[100,3.1],[200,4.8],[300,7.7],[400,9],[800,9.5],[1e9,10]],"Delhi":[[200,3],[400,4.5],[800,6.5],[1200,7],[1e9,8]],"Maharashtra":[[100,5.5],[300,10.8],[500,15],[1e9,17]],"Karnataka":[[100,4.1],[200,5.5],[1e9,7.2]],"Tamil Nadu":[[100,0],[200,2.35],[400,4.7],[500,6.3],[600,8.4],[800,9.45],[1000,10.5],[1e9,11.5]],"Other / Average":[[100,4],[200,6],[300,7.5],[500,8.5],[1e9,9.5]]};
+const CITY_STATE={Hyderabad:"Telangana",Delhi:"Delhi",Mumbai:"Maharashtra",Pune:"Maharashtra",Nagpur:"Maharashtra",Bengaluru:"Karnataka",Chennai:"Tamil Nadu",Coimbatore:"Tamil Nadu",Visakhapatnam:"Other / Average"};
+const APPS=[["❄️","Air conditioner (1.5 ton inverter)",1500,6,.6],["🌀","Ceiling fan (BLDC)",35,12,1],["🌬️","Ceiling fan (regular)",75,12,1],["💡","LED bulb",10,6,1],["🧊","Refrigerator",150,24,.4],["💧","Water pump",750,1,1],["📺","Television",100,5,1],["🧺","Washing machine",500,1,1],["🔥","Geyser",2000,1,1],["💻","Computer / laptop",100,6,1]];
+const S={step:0,q:APPS.map(()=>0),h:APPS.map(a=>a[3]),city:"Hyderabad",state:"Telangana",res:true,roof:600,shade:10,units:"",amt:"",bill:null,down:20,rate:7,ten:5,esc:4};
+const $=(s)=>document.querySelector(s),inr=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+function tariff(u,st=S.state){let b=0,p=0;for(const[l,r]of TARIFF[st]){if(u>p)b+=(Math.min(u,l)-p)*r;p=l}return b}
+function slabRows(u,st=S.state){let p=0,o=[];for(const[l,r]of TARIFF[st]){if(u>p)o.push([p+1+"–"+(l>1e8?"∞":l),Math.min(u,l)-p,r,(Math.min(u,l)-p)*r]);p=l}return o}
+function calc(){
+ const dailyApp=APPS.reduce((s,a,i)=>s+S.q[i]*a[2]*S.h[i]*a[4]/1000,0);
+ const bu=parseFloat(S.units)||0;
+ const monthly=bu>0?bu:dailyApp*30, daily=monthly/30, psh=CITIES[S.city];
+ let kw=Math.max(1,Math.ceil(daily/(psh*.8)*2)/2);
+ const usable=S.roof*(1-S.shade/100), maxkw=Math.floor(usable/100*2)/2;
+ const roofLimited=kw>maxkw; if(roofLimited)kw=Math.max(maxkw,0);
+ const area=kw*100, cost=kw*55000;
+ const sub=S.res?(kw>=3?78000:kw>=2?60000:kw>=1?30000:0):0, net=cost-sub;
+ const gen=kw*psh*.8*30, before=tariff(monthly), after=tariff(Math.max(0,monthly-gen));
+ const save=before-after;
+ let cumNo=[],cumSol=[],a=0,b=net,pay=null,tot=0,co2=0;
+ for(let y=1;y<=25;y++){const e=Math.pow(1+S.esc/100,y-1),d=Math.pow(.993,y-1);
+  const g=tariff(monthly)*12*e, s=tariff(Math.max(0,monthly-gen*d))*12*e;
+  a+=g;b+=s;cumNo.push(a);cumSol.push(b);co2+=gen*12*d*.82;
+  if(pay===null&&a>=b){const pa=cumNo[y-2]||0,pb=cumSol[y-2]||net;pay=y-1+(pb-pa)/((pb-pa)-(b-a))}}
+ if(pay===null&&save>0)pay=net/(save*12);
+ const night=daily*.35;
+ const loan=net*(1-S.down/100),r=S.rate/1200,n=S.ten*12,emi=r?loan*r*Math.pow(1+r,n)/(Math.pow(1+r,n)-1):loan/n;
+ return{dailyApp,monthly,daily,psh,kw,maxkw,roofLimited,area,cost,sub,net,gen,before,after,save,cumNo,cumSol,pay,co2:co2/1000,trees:co2/(21*25),night,emi,loan,usable}
+}
+function render(){
+ [...$("#steps").children].forEach((e,i)=>e.className=i===S.step?"on":"");
+ const A=$("#app");
+ if(S.step===0){A.innerHTML=`<div class="card"><h2>What runs in your home or shop?</h2><p class="mu">Tap + to add appliances and slide the hours used per day.</p>
+ ${APPS.map((a,i)=>`<div class="row"><div>${a[0]} ${a[1]}<div class="mu">${a[2]} W</div></div>
+ <div class="q"><button onclick="qt(${i},-1)">−</button><b id="q${i}">${S.q[i]}</b><button onclick="qt(${i},1)">+</button></div>
+ <div class="sl"><input type="range" min="0" max="24" step=".5" value="${S.h[i]}" oninput="S.h[${i}]=+this.value;$('#h${i}').textContent=this.value+' h/day';tot()"><span class="mu" id="h${i}">${S.h[i]} h/day</span></div></div>`).join("")}
+ <div class="stat"><b>Estimated use</b><b id="tot"></b></div></div>
+ <div class="nav"><span></span><button class="btn" onclick="go(1)">Next: Bill & home →</button></div>`;tot()}
+ if(S.step===1){A.innerHTML=`<div class="card"><h2>Upload your electricity bill</h2><p class="mu">Add your bill and enter the units and amount shown on it. We use your real consumption to size the system.</p>
+ <div class="drop" id="drop" onclick="$('#file').click()"><div style="font-size:34px">📄</div><b>Tap or drop your bill here</b><div class="mu">JPG, PNG or PDF</div><div id="prev"></div></div>
+ <input type="file" id="file" accept="image/*,.pdf" class="hide">
+ <div class="grid" style="margin-top:12px"><div><label>Units consumed (kWh) on bill</label><input type="number" id="un" placeholder="e.g. 450" value="${S.units}"></div>
+ <div>
+    <label>Bill amount (₹)</label><input type="number" id="am" placeholder="e.g. 3200" value="${S.amt}"></div></div><div id="chk" class="mu" style="margin-top:8px"></div></div>
+ <div class="card"><h2>Your home</h2><div class="grid">
+ <div>
+    <label>City</label><select id="city">${Object.keys(CITIES).map(c=>`<option ${c===S.city?"selected":""}>${c}</option>`).join("")}</select></div>
+ <div>
+    <label>Tariff region</label><select id="st">${Object.keys(TARIFF).map(c=>`<option ${c===S.state?"selected":""}>${c}</option>`).join("")}</select></div>
+ <div>
+    <label>Connection</label><select id="res"><option value="1" ${S.res?"selected":""}>Home (subsidy eligible)</option><option value="0" ${!S.res?"selected":""}>Shop / commercial</option></select></div>
+ <div>
+    <label>Shadow-free roof area (sq ft)</label><input type="number" id="roof" value="${S.roof}"></div></div>
+ <label style="margin-top:12px">Shading on roof: <b id="shv">${S.shade}%</b></label><input type="range" id="shade" min="0" max="70" value="${S.shade}"></div>
+ <div class="nav"><button class="ghost" onclick="go(0)">← Back</button><button class="btn" onclick="go(2)">Show my solar plan ☀️</button></div>`;
+ $("#city").onchange=e=>{S.city=e.target.value;if(CITY_STATE[S.city]){S.state=CITY_STATE[S.city];$("#st").value=S.state}};
+ $("#st").onchange=e=>S.state=e.target.value;$("#res").onchange=e=>S.res=e.target.value==="1";
+ $("#roof").oninput=e=>S.roof=+e.target.value||0;$("#shade").oninput=e=>{S.shade=+e.target.value;$("#shv").textContent=S.shade+"%"};
+ const chk=()=>{S.units=$("#un").value;S.amt=$("#am").value;const u=+S.units,m=+S.amt;
+  $("#chk").innerHTML=u>0&&m>0?`Your effective rate: <b>${inr(m/u)}/unit</b>. Our slab model gives ${inr(tariff(u))} for ${u} units${Math.abs(tariff(u)-m)/m>.25?" – your tariff may differ, savings are estimates.":" – a close match ✅"}`:"";};
+ $("#un").oninput=chk;$("#am").oninput=chk;chk();
+ const f=$("#file"),dr=$("#drop"),show=file=>{if(!file)return;S.bill=file.name;
+  $("#prev").innerHTML=`<div class="mu">✅ ${file.name}</div>`;
+  if(file.type.startsWith("image/")){const r=new FileReader();r.onload=()=>{S.billImg=r.result;$("#prev").innerHTML+=`<img src="${r.result}" alt="Bill preview">`};r.readAsDataURL(file)}};
+ f.onchange=e=>show(e.target.files[0]);
+ dr.ondragover=e=>{e.preventDefault();dr.classList.add("d")};dr.ondragleave=()=>dr.classList.remove("d");
+ dr.ondrop=e=>{e.preventDefault();dr.classList.remove("d");show(e.dataTransfer.files[0])};
+ if(S.bill){$("#prev").innerHTML=`<div class="mu">✅ ${S.bill}</div>`+(S.billImg?`<img src="${S.billImg}" alt="Bill preview">`:"")}}
+ if(S.step===2)results();
+ scrollTo({top:0,behavior:"smooth"})
+}
+function tot(){const d=APPS.reduce((s,a,i)=>s+S.q[i]*a[2]*S.h[i]*a[4]/1000,0);$("#tot").textContent=d.toFixed(1)+" kWh/day · "+Math.round(d*30)+" kWh/month"}
+function qt(i,d){S.q[i]=Math.max(0,S.q[i]+d);$("#q"+i).textContent=S.q[i];tot()}
+function go(n){if(n===2){const c=calc();if(c.monthly<=0){alert("Please add at least one appliance or enter units from your bill.");return}}S.step=n;render()}
+function cu(el,v,fmt){const t0=performance.now();(function f(t){const p=Math.min(1,(t-t0)/1200),e=1-Math.pow(1-p,3);el.textContent=fmt(v*e);if(p<1)requestAnimationFrame(f)})(t0)}
+let chart;
+function results(){
+ const c=calc(),A=$("#app"),shadeBad=S.shade>40;
+ A.innerHTML=`<div class="hero">
+ <div class="big g">Estimated monthly savings<span data-c="${c.save}" data-f="inr">₹0</span></div>
+ <div class="big">System pays for itself in<span data-c="${c.pay||0}" data-f="yr">0</span></div>
+ <div class="big">Recommended system<span data-c="${c.kw}" data-f="kw">0</span></div></div>
+ <div style="height:14px"></div>
+ ${c.roofLimited?`<div class="warn">⚠️ Your roof fits only ${c.maxkw} kW after shading, less than the ${(c.kw)} kW ideal. Savings below use the smaller size.</div>`:""}
+ ${shadeBad?`<div class="warn">⚠️ Shading above 40% greatly reduces output. Consider trimming trees or relocating panels.</div>`:""}
+ <div class="card"><h3>⚡ Your energy audit</h3>
+ <div class="stat"><span>Daily use ${(+S.units>0)?"(from your bill)":"(from appliances)"}</span><b>${c.daily.toFixed(1)} kWh</b></div>
+ <div class="stat"><span>Monthly use</span><b>${Math.round(c.monthly)} kWh</b></div>
+ <div class="stat"><span>Sun hours in ${S.city}</span><b>${c.psh} h/day</b></div>
+ <div class="stat"><span>Roof needed / available</span><b>${c.area} / ${Math.round(c.usable)} sq ft ${c.area<=c.usable?"✅":"❌"}</b></div>
+ <div class="bar" style="margin-top:8px"><i data-w="${Math.min(100,c.area/Math.max(c.usable,1)*100)}"></i></div></div>
+ <div class="grid"><div class="card"><h3>💰 Money</h3>
+ <div class="stat"><span>Upfront cost</span><b>${inr(c.cost)}</b></div>
+ <div class="stat"><span>Govt. subsidy (PM Surya Ghar)</span><b>− ${inr(c.sub)}</b></div>
+ <div class="stat"><span>Your net cost</span><b>${inr(c.net)}</b></div>
+ <div class="stat"><span>Bill now → with solar</span><b>${inr(c.before)} → ${inr(c.after)}</b></div></div>
+ <div class="card"><h3>🌳 Environment (25 yrs)</h3>
+ <div class="stat"><span>CO₂ avoided</span><b>${c.co2.toFixed(1)} tonnes</b></div>
+ <div class="stat"><span>Like planting</span><b>${Math.round(c.trees).toLocaleString("en-IN")} trees</b></div>
+ <div class="stat"><span>Solar units / month</span><b>${Math.round(c.gen)} kWh</b></div></div></div>
+ <div class="card"><h3>📈 25-year view</h3><p class="mu">Cumulative cost of staying on grid vs going solar (tariff rises ${S.esc}%/yr). Where the lines cross, solar has paid for itself.</p><canvas id="ch"></canvas></div>
+ <div class="card"><h3>🧮 How your bill is calculated (slabs)</h3><table class="slab"><tr><th>Units</th><th>Used</th><th>₹/unit</th><th>Cost</th></tr>
+ ${slabRows(c.monthly).map(r=>`<tr><td>${r[0]}</td><td>${Math.round(r[1])}</td><td>${r[2]}</td><td>${inr(r[3])}</td></tr>`).join("")}</table>
+ <p class="mu">Marginal rate: your last unit costs ${inr(tariff(c.monthly+1)-tariff(c.monthly))}. Solar removes the most expensive units first. Slab rates are approximate.</p></div>
+ <div class="grid"><div class="card"><h3>🔋 Battery backup add-on</h3><p class="mu">To run ~35% of daily load at night:</p>
+ <div class="stat"><span>Lithium (80% usable)</span><b>${(c.night/.8).toFixed(1)} kWh</b></div>
+ <div class="stat"><span>Lead-acid (50% usable)</span><b>${(c.night/.5).toFixed(1)} kWh</b></div></div>
+ <div class="card"><h3>🏦 Solar loan EMI</h3>
+ <div class="grid"><div><label>Down payment %</label><input type="number" id="dn" value="${S.down}"></div><div><label>Rate %</label><input type="number" id="rt" value="${S.rate}"></div><div><label>Years</label><input type="number" id="tn" value="${S.ten}"></div></div>
+ <div class="stat"><span>Monthly EMI</span><b id="emi">${inr(c.emi)}</b></div>
+ <div class="stat"><span>Monthly bill saving</span><b>${inr(c.save)}</b></div>
+ <div class="mu" id="emn">${c.save>=c.emi?"✅ Savings cover your EMI.":"Savings cover "+Math.round(c.save/c.emi*100)+"% of the EMI."}</div></div></div>
+ ${S.bill?`<div class="card"><h3>📄 Your uploaded bill</h3><div class="mu">${S.bill}${S.amt?" · billed "+inr(+S.amt):""}${S.units?" · "+S.units+" kWh":""}</div>${S.billImg?`<img src="${S.billImg}" style="max-width:100%;max-height:220px;border-radius:10px;margin-top:8px" alt="Bill">`:""}</div>`:""}
+ <div class="nav" id="noprint"><button class="ghost" onclick="go(1)">← Edit details</button><button class="btn" onclick="print()">🖨️ Save quotation as PDF</button></div>`;
+ document.querySelectorAll("[data-c]").forEach(e=>{const f={inr,yr:v=>v.toFixed(1)+" yrs",kw:v=>v.toFixed(1)+" kW"}[e.dataset.f];cu(e,+e.dataset.c,f)});
+ setTimeout(()=>document.querySelectorAll("[data-w]").forEach(e=>e.style.width=e.dataset.w+"%"),100);
+ const ys=[...Array(25)].map((_,i)=>i+1),dk=matchMedia("(prefers-color-scheme:dark)").matches,tc=dk?"#9aa4b8":"#667085";
+ if(chart)chart.destroy();
+ chart=new Chart($("#ch"),{type:"line",data:{labels:ys,datasets:[{label:"Staying on grid",data:c.cumNo.map(Math.round),borderColor:"#dc2626",pointRadius:0,tension:.3},{label:"Going solar (cost + remaining bills)",data:c.cumSol.map(Math.round),borderColor:"#16a34a",pointRadius:0,tension:.3}]},
+  options:{responsive:true,animation:{duration:1800},plugins:{legend:{labels:{color:tc}}},scales:{x:{title:{display:true,text:"Year",color:tc},ticks:{color:tc}},y:{ticks:{color:tc,callback:v=>"₹"+(v/100000).toFixed(0)+"L"}}}}});
+ const up=()=>{S.down=+$("#dn").value;S.rate=+$("#rt").value;S.ten=Math.max(1,+$("#tn").value);const d=calc();$("#emi").textContent=inr(d.emi);$("#emn").textContent=d.save>=d.emi?"✅ Savings cover your EMI.":"Savings cover "+Math.round(d.save/d.emi*100)+"% of the EMI."};
+ ["dn","rt","tn"].forEach(i=>$("#"+i).oninput=up);
+}
+$("#th").onclick=()=>{const d=document.documentElement,dk=d.dataset.theme?d.dataset.theme==="dark":matchMedia("(prefers-color-scheme:dark)").matches;d.dataset.theme=dk?"light":"dark";if(S.step===2)results()};
+render();
+</script>
+</body>
+</html>
